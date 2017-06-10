@@ -3,9 +3,10 @@ import {
 	IStockPileFactory, 
 	Queue 
 } from './StockPile';
-import { PromiseThunk } from './Helpers';
+import { PromiseThunk, timeout } from './Helpers';
 interface IOptions {
 	collection?: IStockPile<PromiseThunk<any>>;	
+	timeout?: number;
 }
 
 /**
@@ -13,7 +14,8 @@ interface IOptions {
  */
 export function PromiseQueue(options: IOptions = {}) {
 	let {
-		collection: thunks = Queue<PromiseThunk<any>>()
+		collection: thunks = Queue<PromiseThunk<any>>(),
+		timeout: _timeout
 	} = options;
 	let current: PromiseThunk<any>|null = null;
 
@@ -34,11 +36,22 @@ export function PromiseQueue(options: IOptions = {}) {
 	function tick(thunk: PromiseThunk<any>) {
 		let ignore = () => {};
 		setTimeout(() => {
-			thunk!()
+			executeThunk(thunk)
 			.catch(ignore)
 			.then(() => processNext(true));
 		}, 0);
 	}
+	function executeThunk(thunk: PromiseThunk<any>) {
+		if (typeof _timeout !== 'number') {
+			return thunk();
+		} else {
+			return Promise.race([
+				thunk(),
+				timeout(_timeout, 'PromiseQueue had to timeout an ongoing promise.')
+			]);
+		}
+	}
+
 	function clear() {
 		thunks.clear();
 	}

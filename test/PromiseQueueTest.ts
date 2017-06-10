@@ -1,6 +1,6 @@
 import { expect } from 'chai';
 import * as sinon from 'sinon';
-import { PromiseThunk, flatMap } from '../src/Helpers';
+import { PromiseThunk, flatMap, wait } from '../src/Helpers';
 import { Queue, IStockPile } from '../src/StockPile';
 import { AlertingStockPile } from './helpers/AlertingStockPile';
 import { TestPromise, IEventLog } from './helpers/TestPromise';
@@ -63,9 +63,7 @@ describe('PromiseQueue', () => {
 				let actualEvents = logs.map(l => l.event);
 				let expectedEvents = [
 					...promises[0].expectedEvents,
-					promises[1].expectedEvents[0],
-					promises[1].expectedEvents[1],
-					promises[1].expectedEvents[2],
+					...promises[1].expectedEvents.slice(0, 3),
 					...promises[2].expectedEvents
 				];
 				expect(actualEvents).to.deep.equal(expectedEvents);
@@ -80,7 +78,7 @@ describe('PromiseQueue', () => {
 			let now = new Date().getTime();
 			let collection = AlertingStockPile<IEventLog>({
 				expectedCount: 5 * 3,
-				timeout: 5 * 1000				
+				timeout: 3 * 1000				
 			});
 			let promises = [
 				TestPromise({ name: 'ordered-1', time: now, eventLog: collection }),
@@ -95,6 +93,90 @@ describe('PromiseQueue', () => {
 			return collection.promise.then(logs => {
 				let actualEvents = logs.map(l => l.event);
 				let expectedEvents = flatMap(promises.map(p => p.expectedEvents));
+				expect(actualEvents).to.deep.equal(expectedEvents);
+
+				let hasCompleteds = promises.map(p => p.hasCompleted);
+				expect(hasCompleteds).to.deep.equal([true, true, true]);
+			});
+		});
+		it('should be able to finish processing a chain, then pick up another chain of events', () => {
+			let queue = Queue<PromiseThunk<any>>();
+			let pQueue = PromiseQueue({ collection: queue });
+			let now1 = new Date().getTime();
+			let collection1 = AlertingStockPile<IEventLog>({
+				expectedCount: 5 * 3,
+				timeout: 3 * 1000				
+			});
+			let promises1 = [
+				TestPromise({ name: 'chain-1-1', time: now1, eventLog: collection1 }),
+				TestPromise({ name: 'chain-1-2', time: now1, eventLog: collection1 }),
+				TestPromise({ name: 'chain-1-3', time: now1, eventLog: collection1 })
+			];
+			promises1.forEach(p => {
+				pQueue.enqueue(p.thunk);
+			});
+
+			collection1.begin();
+			return collection1.promise.then(logs => {
+				let actualEvents = logs.map(l => l.event);
+				let expectedEvents = flatMap(promises1.map(p => p.expectedEvents));
+				expect(actualEvents).to.deep.equal(expectedEvents);
+
+				let hasCompleteds = promises1.map(p => p.hasCompleted);
+				expect(hasCompleteds).to.deep.equal([true, true, true]);
+				return wait(250);
+			}).then(() => {
+				// Second rush of promises.
+				let now2 = new Date().getTime();
+				let collection2 = AlertingStockPile<IEventLog>({
+					expectedCount: 5 * 3,
+					timeout: 3 * 1000				
+				});
+				let promises2 = [
+					TestPromise({ name: 'chain-2-1', time: now2, eventLog: collection2 }),
+					TestPromise({ name: 'chain-2-2', time: now2, eventLog: collection2 }),
+					TestPromise({ name: 'chain-2-3', time: now2, eventLog: collection2 })
+				];
+				promises2.forEach(p => {
+					pQueue.enqueue(p.thunk);
+				});
+
+				collection2.begin();
+				return collection2.promise.then(logs => {
+					let actualEvents = logs.map(l => l.event);
+					let expectedEvents = flatMap(promises2.map(p => p.expectedEvents));
+					expect(actualEvents).to.deep.equal(expectedEvents);
+
+					let hasCompleteds = promises2.map(p => p.hasCompleted);
+					expect(hasCompleteds).to.deep.equal([true, true, true]);
+				});
+			});
+		});
+		it('should be able to timeout on long running promises, and handle it like an error', () => {
+			let queue = Queue<PromiseThunk<any>>();
+			let pQueue = PromiseQueue({ collection: queue, timeout: 1000 });
+			let now = new Date().getTime();
+			let collection = AlertingStockPile<IEventLog>({
+				expectedCount: 5 + 4 + 5,
+				timeout: 3 * 1000				
+			});
+			let promises = [
+				TestPromise({ name: 'timeout-1', time: now, eventLog: collection }),
+				TestPromise({ name: 'timeout-2', time: now, eventLog: collection, firstDelay: 500, secondDelay: 750 }),
+				TestPromise({ name: 'timeout-3', time: now, eventLog: collection })
+			];
+			promises.forEach(p => {
+				pQueue.enqueue(p.thunk);
+			});
+
+			collection.begin();
+			return collection.promise.then(logs => {
+				let actualEvents = logs.map(l => l.event);
+				let expectedEvents = [
+					...promises[0].expectedEvents,
+					...promises[1].expectedEvents.slice(0, 4),
+					...promises[2].expectedEvents
+				];
 				expect(actualEvents).to.deep.equal(expectedEvents);
 
 				let hasCompleteds = promises.map(p => p.hasCompleted);

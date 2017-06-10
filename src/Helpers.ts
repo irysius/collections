@@ -82,3 +82,23 @@ export function rangeAsArray(range: IRange): number[] {
 	}
 	return results;
 }
+/**
+ * Returns a promise that resolves after waiting for the specified timeout
+ */
+export function wait(timeout: number) {
+	return new Promise<void>((resolve) => {
+		setTimeout(() => {
+			resolve();
+		}, timeout);
+	});
+}
+/**
+ * Returns a promise to timeout with the specified error message
+ */
+export function timeout(timeout: number, errorMessage: string) {
+	return new Promise<void>((_, reject) => {
+		setTimeout(() => {
+			reject(new Error(errorMessage));
+		}, timeout);
+	});
+}
