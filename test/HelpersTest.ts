@@ -97,7 +97,7 @@ describe('Helpers', () => {
 			expect(createIndexer.bind(null, '')).to.throw('Attempted to create an indexer from an empty string');
 		});
 	});
-	describe('#createRanges', () => {
+	describe.skip('#createRanges', () => {
 		let emptyRange: number[] = [];
 		let contiguousRange = [4, 5, 6, 7, 8, 9, 10];
 		let spottyRange = [3, 4, 8, 10, 12, 13, 16, 17, 21, 22, 23, 33, 34, 46, 50, 51, 53];

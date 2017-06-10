@@ -55,7 +55,7 @@ export function Stack<T>(initialItems?: T[]): IStockPile<T> {
 	}
 
 	let proxy = {
-		add, take
+		add, take, clear
 	};
 	Object.defineProperty(proxy, 'count', {
 		get: () => items.length,
