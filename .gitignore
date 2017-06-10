@@ -1,5 +1,5 @@
 node_modules/
 typings/
-tests/**/*.js
+test/**/*.js
 src/**/*.js
 build/
