@@ -5,18 +5,16 @@ import {
 } from './StockPile';
 import { PromiseThunk } from './Helpers';
 interface IOptions {
-	collectionType?: IStockPileFactory<any>;	
+	collection?: IStockPile<PromiseThunk<any>>;	
 }
-
 
 /**
  * Queue that is used to manage (long running) promises
  */
-function PromiseQueue(options: IOptions = {}) {
+export function PromiseQueue(options: IOptions = {}) {
 	let {
-		collectionType = Queue
+		collection: thunks = Queue<PromiseThunk<any>>()
 	} = options;
-	let thunks: IStockPile<PromiseThunk<any>> = collectionType();
 	let current: PromiseThunk<any>|null = null;
 
 	function enqueue(thunk: PromiseThunk<any>) {
@@ -30,10 +28,16 @@ function PromiseQueue(options: IOptions = {}) {
 			// only continue if there's nothing currently running.
 			// or continue if we are currently processing a queue.
 			current = thunks.take()!;
-			setTimeout(() => {
-				current!().then(() => processNext(true));
-			});
+			tick(current);
 		}
+	}
+	function tick(thunk: PromiseThunk<any>) {
+		let ignore = () => {};
+		setTimeout(() => {
+			thunk!()
+			.catch(ignore)
+			.then(() => processNext(true));
+		}, 0);
 	}
 	function clear() {
 		thunks.clear();
