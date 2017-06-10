@@ -7,6 +7,7 @@ export interface IRange {
 	start: number; end: number;
 }
 export function asSkipTake(range: IRange) {
+	if (range.end < range.start) { throw new Error('An invalid range has been passed to asSkipTake.'); }
 	return {
 		skip: range.start,
 		take: range.end - range.start + 1
@@ -40,11 +41,13 @@ export function createRanges(indices: number[], options: ICreateRangesOptions = 
 	let {
 		maxGapSize = 0
 	} = options;
+	if (maxGapSize < 0) { throw new Error('Cannot createRanges with a negative maxGapSize.'); }
 	
 	return [];
 }
 export function createIndexer<U>(indexer: string|Mapper<U, number>): Mapper<U, number> {
 	if (typeof indexer === 'string') {
+		if (!indexer) { throw new Error('Attempted to create an indexer from an empty string'); }
 		let prop = indexer;
 		return (item: U) => (<any>item)[prop] as number;
 	} else {
@@ -70,6 +73,7 @@ export function shuffle<T>(items: T[]): T[] {
 	return copy;
 }
 export function rangeAsArray(range: IRange): number[] {
+	if (range.end < range.start) { throw new Error('An invalid range has been passed to rangeAsArray.'); }
 	let { skip, take } = asSkipTake(range);
 	let results = [];
 	let i;
