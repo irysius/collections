@@ -1,0 +1,14 @@
+{
+	"compilerOptions": {
+		"module": "commonjs",
+		"outDir": "build",
+		"lib": [
+			"dom", "es2015", "es2015.promise"
+		],
+		"strict": true
+	},
+	"include": [
+		"src/**/*.ts",
+		"typings/index.d.ts"
+	]
+}

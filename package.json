@@ -1,0 +1,17 @@
+{
+  "name": "template",
+  "version": "1.0.0",
+  "description": "template for typescript projects targeting node.js",
+  "main": "build/main.js",
+  "scripts": {
+    "test": "mocha tests"
+  },
+  "author": "Lester Sy",
+  "license": "ISC",
+  "devDependencies": {
+    "chai": "^4.0.0",
+    "gulp": "^3.9.1",
+    "mocha": "^3.4.2",
+    "rimraf": "^2.6.1"
+  }
+}

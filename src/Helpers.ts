@@ -1,0 +1,80 @@
+export interface IMap<T> {
+	[key: string]: T;
+}
+export type Mapper<T, U> = (item: T) => U;
+export type PromiseThunk<T> = () => Promise<T>;
+export interface IRange {
+	start: number; end: number;
+}
+export function asSkipTake(range: IRange) {
+	return {
+		skip: range.start,
+		take: range.end - range.start + 1
+	};
+}
+export function canBeInteger(value: any): boolean {
+	if (typeof value === 'string') {
+		let integer = parseInt(value, 10);
+		return '' + integer === value;
+	} else if (typeof value === 'number') {
+		return Math.floor(value) === value;
+	} else {
+		return false;
+	}
+}
+export function flatMap<T>(items: T[][]): T[] {
+	let i, j;
+	let results: T[] = [];
+	for (i = 0; i < items.length; ++i) {
+		let item = items[i];
+		for (j = 0; j < item.length; ++j) {
+			results.push(item[j]);
+		}
+	}
+	return results;
+}
+interface ICreateRangesOptions {
+	maxGapSize?: number;
+}
+export function createRanges(indices: number[], options: ICreateRangesOptions = {}): IRange[] {
+	let {
+		maxGapSize = 0
+	} = options;
+	
+	return [];
+}
+export function createIndexer<U>(indexer: string|Mapper<U, number>): Mapper<U, number> {
+	if (typeof indexer === 'string') {
+		let prop = indexer;
+		return (item: U) => (<any>item)[prop] as number;
+	} else {
+		return indexer;
+	}
+}
+export function coalesceNumber(value: number|undefined, defaultValue: number): number {
+	if (typeof value === 'number') {
+		return value;
+	} else {
+		return defaultValue;
+	}
+}
+export function shuffle<T>(items: T[]): T[] {
+	let copy = items.slice();
+	// Durstenfeld shuffle
+	for (let i = copy.length - 1; i > 0; i--) {
+		let j = Math.floor(Math.random() * (i + 1));
+		let temp = copy[i];
+		copy[i] = copy[j];
+		copy[j] = temp;
+	}
+	return copy;
+}
+export function rangeAsArray(range: IRange): number[] {
+	let { skip, take } = asSkipTake(range);
+	let results = [];
+	let i;
+	for (i = skip; i < skip + take; ++i) {
+		results.push(i);
+	}
+	return results;
+}
