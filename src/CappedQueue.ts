@@ -3,7 +3,11 @@ import { IStockPile } from './StockPile';
 
 interface IOptions<T> {
 	maxCount: number;
-	overflowResolver: OverflowResolver<T>;
+	overflowResolver?: OverflowResolver<T>;
+}
+
+function identity<T>(items: T[]) {
+	return items;
 }
 
 /**
@@ -11,11 +15,15 @@ interface IOptions<T> {
  * @param initialItems An array of items that can be used to initialize the Queue.
  */
 export function CappedQueue<T>(options: IOptions<T>, initialItems?: T[]): IStockPile<T> {
+	
 	let {
 		maxCount,
-		overflowResolver
+		overflowResolver = identity
 	} = options;
 	let items: T[] = initialItems || [];
+	if (items.length > maxCount) { 
+		throw new Error('Cannot initialize a CappedQueue with more items than the maxCount.'); 
+	}
 
 	function add(item: T): void {
 		if (items.length >= maxCount) {
